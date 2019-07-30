@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<GridPane xmlns:fx="http://javafx.com/fxml/1"
+	fx:controller="me.gtol.calculatorfx.controller.StandardPaneController" fx:id="standardPane">
+	<columnConstraints>
+		<ColumnConstraints hgrow="always" />
+		<ColumnConstraints hgrow="always" />
+		<ColumnConstraints hgrow="always" />
+		<ColumnConstraints hgrow="always" />
+	</columnConstraints>
+	<rowConstraints>
+		<RowConstraints vgrow="always" />
+		<RowConstraints vgrow="always" />
+		<RowConstraints vgrow="always" />
+		<RowConstraints vgrow="always" />
+		<RowConstraints vgrow="always" />
+		<RowConstraints vgrow="always" />
+	</rowConstraints>
+	<children>
+		<Label fx:id="subDisplay" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="4" maxWidth="Infinity" alignment="CENTER_RIGHT"/>
+		<Label fx:id="mainDisplay" GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.columnSpan="4" maxWidth="Infinity" alignment="CENTER_RIGHT"/>
+		<Button fx:id="seven" GridPane.rowIndex="4" GridPane.columnIndex="0" maxHeight="Infinity" maxWidth="Infinity"
+			text="7" onAction="#appendNumber" />
+		<Button fx:id="eight" GridPane.rowIndex="4" GridPane.columnIndex="1" maxHeight="Infinity" maxWidth="Infinity"
+			text="8" onAction="#appendNumber" />
+		<Button fx:id="nine" GridPane.rowIndex="4" GridPane.columnIndex="2" maxHeight="Infinity" maxWidth="Infinity"
+			text="9" onAction="#appendNumber" />
+		<Button fx:id="four" GridPane.rowIndex="5" GridPane.columnIndex="0" maxHeight="Infinity" maxWidth="Infinity"
+			text="4" onAction="#appendNumber" />
+		<Button fx:id="five" GridPane.rowIndex="5" GridPane.columnIndex="1" maxHeight="Infinity" maxWidth="Infinity"
+			text="5" onAction="#appendNumber" />
+		<Button fx:id="six" GridPane.rowIndex="5" GridPane.columnIndex="2" maxHeight="Infinity" maxWidth="Infinity"
+			text="6" onAction="#appendNumber" />
+		<Button fx:id="minusButton" GridPane.rowIndex="5" GridPane.columnIndex="3" maxHeight="Infinity" maxWidth="Infinity"
+			text="−" onAction="#appendOperator" />
+		<Button fx:id="one" GridPane.rowIndex="6" GridPane.columnIndex="0" maxHeight="Infinity" maxWidth="Infinity"
+			text="1" onAction="#appendNumber" />
+		<Button fx:id="two" GridPane.rowIndex="6" GridPane.columnIndex="1" maxHeight="Infinity" maxWidth="Infinity"
+			text="2" onAction="#appendNumber" />
+		<Button fx:id="three" GridPane.rowIndex="6" GridPane.columnIndex="2" maxHeight="Infinity" maxWidth="Infinity"
+			text="3" onAction="#appendNumber" />
+		<Button fx:id="plusButton" GridPane.rowIndex="6" GridPane.columnIndex="3" maxHeight="Infinity" maxWidth="Infinity"
+			text="+" onAction="#appendOperator" />
+		<Button fx:id="negateButton" GridPane.rowIndex="7" GridPane.columnIndex="0" maxHeight="Infinity" maxWidth="Infinity"
+			text="±" onAction="#negate" />
+		<Button fx:id="zero" GridPane.rowIndex="7" GridPane.columnIndex="1" maxHeight="Infinity" maxWidth="Infinity"
+			text="0" onAction="#appendNumber" />
+		<Button fx:id="dotButton" GridPane.rowIndex="7" GridPane.columnIndex="2" maxHeight="Infinity" maxWidth="Infinity"
+			text="." onAction="#appendDot" />
+		<Button fx:id="equalButton" GridPane.rowIndex="7" GridPane.columnIndex="3" maxHeight="Infinity" maxWidth="Infinity"
+			text="=" onAction="#getResult" />
+	</children>
+</GridPane>
+

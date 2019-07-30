@@ -10,13 +10,8 @@ repositories {
 dependencies {
 }
 
-sourceSets {
-  main {
-    resources {
-        srcDirs = ["src/main/java"]
-        includes = ["**/*.fxml"]
-    }
-  }
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
 }
 
 javafx {
