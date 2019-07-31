@@ -1,6 +1,7 @@
 package me.gtol.calculatorfx.controller;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -54,13 +55,12 @@ public class StandardPaneController implements Initializable {
 	private Button		equalButton;
 
 	// data model
-	private boolean			isResult		= false;
-	private boolean			isWaiting		= false;
+	private State state = State.NEW_VALUE;
 	private BooleanProperty	isDividedByZero	= new SimpleBooleanProperty(standardPane, "dividedByZero", false);
 	private StringProperty	mainText		= new SimpleStringProperty(standardPane, "mainText", "0");
 	private StringProperty	subText			= new SimpleStringProperty(standardPane, "subText", "");
 	private BigDecimal		result;
-	private String			operand;
+	private String			operator;
 	private BigDecimal		numCache;
 
 	@Override
@@ -71,197 +71,285 @@ public class StandardPaneController implements Initializable {
 
 	@FXML
 	private void appendNumber(ActionEvent event) {
-		String currentText = mainText.get();
+		String main = mainText.get();
 		String number = ((Button) event.getSource()).getText();
-		if (isResult || isDividedByZero.get()) {
-			result = null;
-			operand = null;
-			subText.set("");
-			mainText.set(number);
-		} else if (isWaiting || currentText.equals("0")) {
-			mainText.set(number);
-		} else if (number.equals("0")) {
-			if (currentText.contains(".")) {
-				mainText.set(currentText + number);
+		
+		switch (state) {
+		case NEW_VALUE:
+			if (main.equals("0")) {
+				mainText.set(number);
+			} else if (number.equals("0")) {
+				if (main.contains(".")) {
+					mainText.set(main + number);
+				}
+			} else {
+				mainText.set(main + number);
 			}
-		} else {
-			mainText.set(currentText + number);
+			break;
+		case B_WAITING:
+			mainText.set(number);
+			break;
+		case U_RESULT:
+		case RESULT:
+			mainText.set(number);
+			subText.set("");
+			operator = null;
+			result = null;
+			break;
+		default:
+			break;
 		}
-		isWaiting = false;
-		isResult = false;
-		isDividedByZero.set(false);
+		state = State.NEW_VALUE;
 	}
 
 	@FXML
 	private void appendDot(ActionEvent event) {
-		String currentText = mainText.get();
-		if (isResult || isDividedByZero.get()) {
-			result = null;
-			operand = null;
+		String main = mainText.get();
+		
+		switch (state) {
+		case NEW_VALUE:
+			if (main.equals("0")) {
+				mainText.set("0.");
+			} else if (!main.contains(".")) {
+				mainText.set(main + ".");
+			}
+			break;
+		case B_WAITING:
+			mainText.set("0.");
+			break;
+		case U_RESULT:
+		case RESULT:
+			mainText.set("0.");
 			subText.set("");
-			mainText.set("0.");
-		} else if (isWaiting || currentText.equals("0")) {
-			mainText.set("0.");
-		} else if (!currentText.contains(".")) {
-			mainText.set(currentText + ".");
+			operator = null;
+			result = null;
+			break;
 		}
-		isWaiting = false;
-		isResult = false;
-		isDividedByZero.set(false);
+		state = State.NEW_VALUE;
 	}
 
 	@FXML
-	private void appendOperator(ActionEvent event) {
+	private void appendBiOperator(ActionEvent event) {
 		String main = mainText.get();
 		String sub = subText.get();
-		String sign = ((Button) event.getSource()).getText();
-
-		if (operand == null) {
-			result = parseNumber(main);
-			subText.set(String.join(" ", main, sign));
-		} else if (isWaiting) {
-			subText.set(sub.substring(0, sub.length() - 1) + sign);
-		} else if (isResult) {
-			isResult = false;
-			subText.set(String.join(" ", main, sign));
-		} else { // needs calculate
-			subText.set(String.join(" ", sub, main, sign));
-			result = binaryOperation(operand, result, parseNumber(main));
-
-			if (isDividedByZero.get()) {
-				mainText.set("Cannot divide by zero");
+		String operatorNew = ((Button) event.getSource()).getId();
+		String symbol = getSymbolByOperator(operatorNew);
+		
+		try {
+		switch (state) {
+		case NEW_VALUE:
+			subText.set(String.join(" ", sub, main, symbol).strip());
+			if (operator == null) {
+				result = new BigDecimal(main);
 			} else {
-				mainText.set(result.toString());
+				result = binaryOperation(operator, result, new BigDecimal(main));
 			}
+			mainText.set(result.toString());
+			break;
+		case U_RESULT:
+			subText.set(String.join(" ", sub, symbol).strip());
+			if (operator == null) {
+				result = new BigDecimal(main);
+			} else {
+				result = binaryOperation(operator, result, new BigDecimal(main));
+			}
+			mainText.set(result.toString());
+			break;
+		case B_WAITING:
+			subText.set(sub.substring(0, sub.length() - 1) + symbol);
+			break;
+		case RESULT:
+			subText.set(String.join(" ", main, symbol).strip());
+			break;
 		}
-		operand = sign;
-		isWaiting = true;
+		operator = operatorNew;
+		state = State.B_WAITING;
+		} catch (Exception e) {
+			result = BigDecimal.ZERO;
+			isDividedByZero.set(true);
+			mainText.set("Cannot divide by zero");
+			state = State.RESULT;
+		}
 	}
 
 	@FXML
-	private void negate(ActionEvent event) {
-		String currentText = mainText.get();
+	private void appendUnOperator(ActionEvent event) {
+		String main = mainText.get();
+		String sub = subText.get();
+		String operatorNew = (String) ((Button) event.getSource()).getId();
+		String symbol = getSymbolByOperator(operatorNew);
+		
+		if (operatorNew.equals("negate") && state == State.NEW_VALUE && operator == null) {
+			if (main.equals("0")) {
+				// consume
+			} else if (main.contains("-")) {
+				mainText.set(main.substring(1));
+			} else {
+				mainText.set("-" + main);
+			}
+		} else {
+			try {
+				String expression;
+				switch (state) {
+				case NEW_VALUE:
+				case B_WAITING:
+					expression = symbol + "(" + main + ")";
+					System.out.println(sub);
+					subText.set(String.join(" ", sub, expression).strip());
+					mainText.set(unaryOperation(operatorNew, new BigDecimal(main)).toString());
+					break;
+				case U_RESULT:
+					int lastIndexOfSpace = sub.lastIndexOf(' ');
+					String first, last;
+					if (lastIndexOfSpace == -1) {
+						first = "";
+						last = sub;
+					} else {
+						first = sub.substring(0, lastIndexOfSpace);
+						last = sub.substring(lastIndexOfSpace + 1);
+					}
+					expression = symbol + "(" + last + ")";
+					subText.set(String.join(" ", first, expression));
+					mainText.set(unaryOperation(operatorNew, new BigDecimal(main)).toString());
+					break;
+				case RESULT:
+					expression = symbol + "(" + main + ")";
+					subText.set(expression);
+					mainText.set(unaryOperation(operatorNew, new BigDecimal(main)).toString());
+					break;
+				default:
+					break;
+				}
+				state = State.U_RESULT;
+			} catch (Exception e) {
+				result = BigDecimal.ZERO;
+				isDividedByZero.set(true);
+				mainText.set("Cannot divide by zero");
+				state = State.RESULT;
+			}
+		}
 	}
 
 	@FXML
 	private void getResult(ActionEvent event) {
 		String main = mainText.get();
 		String sub = subText.get();
-		if (isResult) {
-			if (operand != null) {
-				subText.set(String.join(" ", main, operand, numCache.toString(), "=").strip());
-				result = binaryOperation(operand, result, numCache);
-
-				if (isDividedByZero.get()) {
-					mainText.set("Cannot divide by zero");
+		
+		try {
+			switch (state) {
+			case NEW_VALUE:
+				subText.set(String.join(" ", sub, main, "=").strip());
+				if (operator == null) {
+					result = new BigDecimal(main);
 				} else {
+					result = binaryOperation(operator, result, new BigDecimal(main));
+				}
+				mainText.set(result.toString());
+				break;
+			case U_RESULT:
+				subText.set(String.join(" ", sub, "=").strip());
+				if (operator == null) {
+					result = new BigDecimal(main);
+				} else {
+					result = binaryOperation(operator, result, new BigDecimal(main));
+				}
+				mainText.set(result.toString());
+				break;
+			case B_WAITING:
+				subText.set(String.join(" ", sub, main, "=").strip());
+				result = binaryOperation(operator, result, new BigDecimal(main));
+				mainText.set(result.toString());
+				numCache = new BigDecimal(main);
+			case RESULT:
+				if (operator != null) {
+					subText.set(String.join(" ", main, operator, numCache.toString(), "=").strip());
+					result = binaryOperation(operator, result, numCache);
 					mainText.set(result.toString());
 				}
 			}
-		} else {
-			subText.set(String.join(" ", sub, main, "=").strip());
-			if (operand != null) {
-				numCache = parseNumber(main);
-				System.out.println(operand + result + numCache);
-				result = binaryOperation(operand, result, numCache);
-				System.out.println(result);
-				if (isDividedByZero.get()) {
-					mainText.set("Cannot divide by zero");
-				} else {
-					mainText.set(result.toString());
-				}
-			}
+			state = State.RESULT;
+		} catch (Exception e) {
+			result = BigDecimal.ZERO;
+			isDividedByZero.set(true);
+			mainText.set("Cannot divide by zero");
+			state = State.RESULT;
 		}
-		isResult = true;
 	}
 
-	private BigDecimal binaryOperation(String operator, BigDecimal num1, BigDecimal num2) {
+	private static BigDecimal binaryOperation(String operator, BigDecimal num1, BigDecimal num2) throws Exception {
 		BigDecimal ret;
 		switch (operator) {
-		case "+":
+		case "add":
 			ret = num1.add(num2);
 			break;
-		case "−":
+		case "subtract":
 			ret = num1.subtract(num2);
 			break;
-		case "×":
+		case "multiply":
 			ret = num1.multiply(num2);
 			break;
-		case "÷":
-			if (num2.doubleValue() == 0) {
-				isDividedByZero.set(true);
-				ret = BigDecimal.valueOf(0);
+		case "divide":
+			if (num2.equals(BigDecimal.ZERO)) {
+				throw new Exception("divided by zero");
 			} else {
 				ret = num1.divide(num2);
 			}
 			break;
 		default:
-			ret = BigDecimal.valueOf(0);
-			break;
+			throw new Exception("unsupported operator");
 		}
 		return ret;
 	}
-
-//	private void calculate() {
-//		if (subText.get().isEmpty()) {
-//			return;
-//		}
-//		String[] formula = subText.get().split(" ");
-//		result = parseNumber(formula[0]);
-//		for (int i = 1; i < formula.length; i++) {
-//			if (i == formula.length - 1) {
-//				break;
-//			}
-//			if (i % 2 == 1) {
-//				Number num = parseNumber(formula[i+1]);
-//				switch (formula[i]) {
-//				case "+":
-//					result = result.doubleValue() + num.doubleValue();
-//					break;
-//				case "−":
-//					result = result.doubleValue() - num.doubleValue();
-//					break;
-//				case "×":
-//					result = result.doubleValue() * num.doubleValue();
-//					break;
-//				case "÷":
-//					if (num.doubleValue() == 0) {
-//						result = 0;
-//						isDividedByZero = true;
-//					} else {
-//						result = result.doubleValue() / num.doubleValue();
-//					}
-//					break;
-//				}
-//			}
-//		}
-//		if (isDividedByZero) {
-//			mainText.set("Cannot divide by zero");
-//		} else if (result.doubleValue() % 1.0 == 0) {
-//			mainText.set(Long.toString(result.longValue()));
-//		} else {
-//			mainText.set(result.toString());
-//		}
-//	}
-
-	private static BigDecimal parseNumber(String expression) throws NumberFormatException {
-		int br1 = expression.indexOf('(');
-		if (br1 != -1) {
-			int br2 = expression.lastIndexOf(')');
-			BigDecimal number = parseNumber(expression.substring(br1 + 1, br2));
-			switch (expression.substring(0, br1)) {
-			case "sqr":
-				break;
-			case "1/":
-				break;
-			case "√":
-				break;
-			case "negate":
-				break;
+	
+	private static BigDecimal unaryOperation(String operator, BigDecimal num) throws Exception {
+		BigDecimal ret;
+		switch (operator) {
+		case "square":
+			ret = num.multiply(num);
+			break;
+		case "flip":
+			if (num.equals(BigDecimal.ZERO)) {
+				throw new Exception("divided by zero");
+			} else {
+				ret = BigDecimal.ONE.divide(num);
 			}
-			return null;
-		} else {
-			return new BigDecimal(expression);
+			break;
+		case "squareRoot":
+			ret = num.sqrt(MathContext.UNLIMITED);
+			break;
+		case "negate":
+			ret = num.negate();
+			break;
+		default:
+			throw new Exception("unsupported operator");
 		}
+		return ret;
+	}
+	
+	private static String getSymbolByOperator(String id) {
+		switch (id) {
+		case "add":
+			return "+";
+		case "subtract":
+			return "−";
+		case "multiply":
+			return "×";
+		case "divide":
+			return "÷";
+		case "flip":
+			return "1/";
+		case "square":
+			return "sqr";
+		case "squareRoot":
+			return "√";
+		case "negate":
+			return "negate";
+		default:
+			return "ERROR";
+		}
+	}
+	
+	private enum State {
+		NEW_VALUE, U_RESULT, B_WAITING, RESULT;
 	}
 }

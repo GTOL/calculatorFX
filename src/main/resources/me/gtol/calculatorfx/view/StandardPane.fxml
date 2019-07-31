@@ -10,10 +10,10 @@
 <GridPane xmlns:fx="http://javafx.com/fxml/1"
 	fx:controller="me.gtol.calculatorfx.controller.StandardPaneController" fx:id="standardPane">
 	<columnConstraints>
-		<ColumnConstraints hgrow="always" />
-		<ColumnConstraints hgrow="always" />
-		<ColumnConstraints hgrow="always" />
-		<ColumnConstraints hgrow="always" />
+		<ColumnConstraints percentWidth="25" />
+		<ColumnConstraints percentWidth="25" />
+		<ColumnConstraints percentWidth="25" />
+		<ColumnConstraints percentWidth="25" />
 	</columnConstraints>
 	<rowConstraints>
 		<RowConstraints vgrow="always" />
@@ -39,7 +39,7 @@
 		<Button fx:id="six" GridPane.rowIndex="5" GridPane.columnIndex="2" maxHeight="Infinity" maxWidth="Infinity"
 			text="6" onAction="#appendNumber" />
 		<Button fx:id="minusButton" GridPane.rowIndex="5" GridPane.columnIndex="3" maxHeight="Infinity" maxWidth="Infinity"
-			text="−" onAction="#appendOperator" />
+			text="−" onAction="#appendBiOperator" id="subtract"/>
 		<Button fx:id="one" GridPane.rowIndex="6" GridPane.columnIndex="0" maxHeight="Infinity" maxWidth="Infinity"
 			text="1" onAction="#appendNumber" />
 		<Button fx:id="two" GridPane.rowIndex="6" GridPane.columnIndex="1" maxHeight="Infinity" maxWidth="Infinity"
@@ -47,9 +47,9 @@
 		<Button fx:id="three" GridPane.rowIndex="6" GridPane.columnIndex="2" maxHeight="Infinity" maxWidth="Infinity"
 			text="3" onAction="#appendNumber" />
 		<Button fx:id="plusButton" GridPane.rowIndex="6" GridPane.columnIndex="3" maxHeight="Infinity" maxWidth="Infinity"
-			text="+" onAction="#appendOperator" />
+			text="+" onAction="#appendBiOperator" id="add" />
 		<Button fx:id="negateButton" GridPane.rowIndex="7" GridPane.columnIndex="0" maxHeight="Infinity" maxWidth="Infinity"
-			text="±" onAction="#negate" />
+			text="±" onAction="#appendUnOperator" id="negate" />
 		<Button fx:id="zero" GridPane.rowIndex="7" GridPane.columnIndex="1" maxHeight="Infinity" maxWidth="Infinity"
 			text="0" onAction="#appendNumber" />
 		<Button fx:id="dotButton" GridPane.rowIndex="7" GridPane.columnIndex="2" maxHeight="Infinity" maxWidth="Infinity"
